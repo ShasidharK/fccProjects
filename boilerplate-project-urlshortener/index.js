@@ -2,10 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const bodyParser = require('body-parser');
 const {MongoClient, ObjectId} = require('mongodb');
 const dns = require('dns');
-const url = require('node:url');
+const {URL} = require('url');
 
 let dbClient;
 dbClient = new MongoClient(process.env.MONGO_URI);
@@ -20,7 +19,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/', function(req, res) {
 
@@ -36,8 +35,8 @@ app.get('/api/hello', function(req, res) {
 app.post('/api/shorturl', async function(req, res){
 
   const urlString = req.body.url;
-  const myURL = new URL(urlString);
-  dns.lookup(myURL.host , async (req , validAddress) => {
+  const url = new URL(urlString);
+  dns.lookup(url.hostname , async (req , validAddress) => {
  
    if(!validAddress){
     res.json({error: "invalid url"})
@@ -60,7 +59,12 @@ app.get("/api/shorturl/:short_url" , async (req ,res) => {
   try {    
     const shorturl = req.params.short_url;
     const urlStore = await storeUrls.findOne({short_url: parseInt(shorturl, 10)});
-    res.redirect(urlStore.url_string); 
+    if(urlStore){
+      res.redirect(urlStore.url_string);
+    }
+    else{
+      res.json({error: "No short URL found for the given input"});
+    } 
   } catch (error) {
     res.json({error: "Something is wrong on server side"})
   }
