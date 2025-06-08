@@ -19,7 +19,7 @@ app.post("/api/fileanalyse", upload.single('upfile') ,(req, res) => {
     type: mimetype,
     size: size,
   })
-  res.send("Hello");
+  
 });
 
 
